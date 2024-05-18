@@ -1,4 +1,4 @@
-@echo off
+ @echo off
 echo.
 echo Converts google my maps into OSMAnd GPX files.
 :: 
@@ -7,22 +7,27 @@ echo Converts google my maps into OSMAnd GPX files.
 :: 
 setlocal EnableDelayedExpansion
 set PROGRAM="U:\Projects\Computer Projects\PC Software\GoogleMapToOSMAndGPX\GoogleMapToOSMAndGPX.py"
-set MAPtoKML_PROGRAM="U:\Projects\Computer Projects\PC Software\GetGoogleMapKML\GetGoogleMapKML.py"
-
-echo.
-set /p infile= "  Enter path to file with comma separated pairs <name>,<mapID> values: "
-
+:: first check if the input file is specified on the command line
+if "%~1" == "" (
+	echo.
+	set /p infile= "  Enter path to file with comma separated pairs <name>,<mapID> values: "
+) else (
+	set infile="%~1"
+)
+:: we now have an infile either specified on the command line or through user input
+:: Lets see if file exists
 if exist %infile% goto execute 
 echo.
-echo ***Missing input file: %infile% ***
+echo ***Input file not found: %infile% ***
 echo.
 goto end
+	
 :execute
 :: Get the current date in YYYY-MM-DD format
 for /f "tokens=2 delims==" %%a in ('wmic OS Get localdatetime /value') do set "dt=%%a"
 
 set "CurrentDate=%dt:~0,4%-%dt:~4,2%-%dt:~6,2%"
-echo Current date: %CurrentDate%
+echo Current date: %CurrentDate% Input file: %infile%
 set /a count=0
 set /a errorCount=0
 
