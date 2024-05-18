@@ -1,7 +1,7 @@
 # GoogleMapToOSMAndGPX
 Create a folder of OSMAnd GPX files from a google my maps map
 
-Working directly from a google map export the map's KML data and convert it to a folder of OSMAnd style GPX files. This includes OSMAnd GPX extensions and translation of google waypoint icons into a similar OSMAnd icon.  Tracks and waypoints are the only objects converted.  Descriptions, icon, icon color, track color, track width are all translated.  Each track is put in it's own GPX file and all waypoints are put in a single GPX file.
+It's a python utility that works directly from a google map (using it's map ID) to export the map's KML data and directly convert it into a folder of OSMAnd style GPX files. Both tracks and waypoints and translated.   Descriptions, icon symbol, icon color, track color, track width are all translated. Each track is put in it's own GPX file and all waypoints are put in a single GPX file. Each track is put in it's own GPX file and all waypoints are put in a single GPX file.
 ## Syntax
 ```
 py GoogleMapToOSMAndGPX.py <map_id> <gpx_path> <width 1-24> -t <transparency 00 to FF> -s <split type> -i <split interval miles/seconds> -a -e
