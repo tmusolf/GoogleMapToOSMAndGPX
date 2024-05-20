@@ -1,10 +1,13 @@
  @echo off
 echo.
 echo Converts google my maps into OSMAnd GPX files.
-:: 
 :: Reads in a supplied file containing a google map name and its corresponding ID value (mid=xxxx)
 :: The google map name does not have to be the actual name, it is the string you want used for the folder.
-:: 
+::
+:: If no parameters are supplied batch file will ask for filename and use fixed parameters
+:: You can also invoke the batch file with 2 parameters
+::     GoogleMapToOSMAndGPX <filename> <parms>
+:: The optional 2nd parameter is a string of program parms to replace default ones - used for testing
 setlocal EnableDelayedExpansion
 set PROGRAM="U:\Projects\Computer Projects\PC Software\GoogleMapToOSMAndGPX\GoogleMapToOSMAndGPX.py"
 :: first check if the input file is specified on the command line
@@ -43,7 +46,11 @@ for /f "eol=# tokens=1,2 delims=," %%A in ('type %infile%') do (
 	set "outputfolder=%%A-%CurrentDate%"
 	echo =========================================================================================
 	echo Processing map #!count!
-	py %PROGRAM% %%B "!outputfolder!" -t 80 -w 12
+	if "%~2" == "" (
+		py %PROGRAM% %%B "!outputfolder!" -t 80 -w 12
+	) else (
+		py %PROGRAM% %%B "!outputfolder!" %~2
+	)
 	if !ERRORLEVEL! NEQ 0 (
 		set /a errorCount+=1
 	)
