@@ -10,6 +10,7 @@
 # All waypoints are combined into a single GPX file.
 #
 # 5/17/2024: V1.0 Initial version
+# 5/20/2024: V1.1 Updated icon translation table 
 #========================================================================================
 import sys
 import argparse
@@ -21,12 +22,16 @@ import os.path
 from pathlib import Path
 
 PROGRAM_NAME = Path(sys.argv[0]).stem
-PROGRAM_VERSION = "1.0"
+PROGRAM_VERSION = "1.1"
 DEFAULT_TRACK_TRANSPARENCY = "80"
 DEFAULT_WAYPOINT_DESCRIPTION = ""
 DEFAULT_TRACK_DESCRIPTION = ""
 # Both of these should probably be command line arguments
-DEFAULT_ICON_COLOR = "DB4436"	# rusty red
+DEFAULT_ICON_COLOR = "DB4436"	# rusty red.  If no color found in KML
+ICON_NOT_FOUND_ICON  = "special_symbol_question_mark" # if KML icon is not in translation table
+ICON_NOT_FOUND_COLOR = "e044bb"					# hot pink
+ICON_NOT_FOUND_SHAPE = "octagon"
+ICON_NO_TRANSLATION  = ICON_NOT_FOUND_ICON		#KML icon is in the table, but there is no good OSMAnd equivalent
 DEFAULT_TRACK_SPLIT_INTERVAL = "1.0"  #miles or minutes
 SPLIT_TYPE_TIME = "time"
 SPLIT_TYPE_DISTANCE = "distance"
@@ -140,90 +145,424 @@ def setupParseCmdLine():
 #			</extensions>
 #		</wpt>
 #
+# There is a nice GMap->OSMAnd icon translation proposal here: https://github.com/mariush444/gmapIcons2osmand/blob/main/icons-gmap-osmand.pdf
+#
 # ???: would be nice to have a command line option to read in a user supplied dictionary from a file
 #========================================================================================
 def KMLToOSMAndIcon(KMLIconID):
 
 	iconDictionary ={
-		"unknown":["special_symbol_question_mark","e044bb","octagon"],			#unknown KML icon code - this entry will be used if the KML icon is not found the iconDictionary.
-		"1765":["tourism_camp_site",KMLCOLOR,"circle"],							#campsite
-		"1525":["leisure_marina","a71de1","octagon"],							#river access
-		"1739":["special_number_0",KMLCOLOR,"circle"],							#Mileage marker plus-KML dot on gmaps & Plus in OSMAnd. Did have this color:"1010a0"
-		"1596":["special_trekking",KMLCOLOR,"circle"],							#hiking trailhead  Color I use is 9E963A
-		"1369":["special_trekking",KMLCOLOR,"circle"],							#hiking trailhead -old style icon
-		"1371":["special_trekking",KMLCOLOR,"circle"],							#hiking trailhead -old style icon
-		"1723":["tourism_viewpoint",KMLCOLOR,"octagon"],						#rapid  "d90000"
-		"1602":["tourism_hotel",KMLCOLOR,"circle"],								#hotel, lodge
-		"1528":["bridge_structure_suspension","10c0f0","circle"],				#bridge
-		"1577":["restaurants",KMLCOLOR,"circle"],								#retaurant, diner, dining
-		"1085":["restaurants",KMLCOLOR,"circle"],								#retaurant, diner, dining, old style icon
-		"1650":["tourism_picnic_site","eecc22","circle"],						#picnic site
-		"1644":["amenity_parking",KMLCOLOR,"circle"],							#parking area
-		"1578":["shop_supermarket",KMLCOLOR,"circle"],							#grocery store, supermarket #1 - light blue "10c0f0"
-		"1685":["shop_supermarket",KMLCOLOR,"circle"],							#grocery store, supermarket #2 - light blue	"10c0f0"
-		"1023":["shop_supermarket",KMLCOLOR,"circle"],							#grocery store, supermarket #2 - light blue	"10c0f0", old style grocery icon
-		"1504":["air_transport","10c0f0","circle"],								#airport, airstrip
-		"1581":["fuel",KMLCOLOR,"circle"],										#gas station
-		"1733":["amenity_toilets","10c0f0","circle"],							#toilet, restroom
-		"1624":["amenity_doctors","d00d0d","circle"],							#hospital, doctor, emergency room
-		"1608":["tourism_information","1010a0","circle"],						#tourism information
-		"1203":["tourism_information","1010a0","circle"],						#tourism information, old style icon - big "i"
-		"1535":["special_photo_camera",KMLCOLOR,"circle"],						#POI #1, camera "eecc22"
-		"993": ["special_photo_camera",KMLCOLOR,"circle"],						#POI #1, camera "eecc22" old icon style
-		"1574":["special_flag_start",KMLCOLOR,"circle"],						#POI #2, flag "eecc22"
-		"1899":["special_marker",KMLCOLOR,"circle"],							#POI #3, pin "eecc22"
-		"1502":["special_star",KMLCOLOR,"circle"],								#POI #4, star "eecc22"
-		"1501":["special_symbol_plus",KMLCOLOR,"circle"],						#POI #5, plus/diamond "eecc22"
-		"1500":["special_flag_start",KMLCOLOR,"circle"],						#POI #6, square in google maps & square flag i OSMAnd
-		"1592":["special_heart",KMLCOLOR,"circle"],								#POI #7, heart
-		"1729":["tourism_viewpoint",KMLCOLOR,"circle"],							#Vista point / viewpoint
-		"503": ["special_marker",KMLCOLOR,"circle"],							#Old school map point
-		"1603":["special_house","eecc22","circle"],								#house
-		"1879":["amenity_biergarten",KMLCOLOR,"circle"],						#brewery, brew pub
-		"1541":["special_symbol_exclamation_mark","ff0000","octagon"],			#danger #1 GMaps: "!" 		OSMAnd: exclamation
-		"1898":["special_symbol_exclamation_mark",KMLCOLOR,"octagon"],			#danger #1 GMaps: "X" 		OSMAnd: exclamation 
-		"1564":["amenity_fire_station","ff0000","octagon"],						#danger #2 GMaps: 			OSMAnd: fire/explosion
-		"1710":["special_arrow_up_and_down","10c0f0","circle"],					#river gauge, up/down arrow or thermometer
-		"1655":["amenity_police","1010a0","circle"],							#ranger/police station #1
-		"1657":["amenity_police","1010a0","circle"],							#ranger/police station #2
-		"1720":["wood","eecc22","circle"],										#Park/National Park - yellow
-		"1701":["sport_swimming","eecc22","circle"],							#Lake/swimmer - yellow
-		"1395":["sport_swimming","eecc22","circle"],							#Lake/swimmer - yellow, old style icon
-		"1811":["special_sun","eecc22","circle"],								#hot spring/sun - yellow
-		"1716":["route_railway_ref",KMLCOLOR,"circle"],							#train station - purple
-		"1532":["route_bus_ref",KMLCOLOR,"circle"],								#bus station or stop
-		"1626":["route_monorail_ref",KMLCOLOR,"circle"],						#Metro, subway stop
-		"1534":["amenity_cafe",KMLCOLOR,"circle"],								#cafe/coffe - blue
-		"1607":["amenity_cafe",KMLCOLOR,"circle"],								#cafe/coffe - blue, old style ice cream cone icon
-		"1892":["waterfall","eecc22","circle"],									#waterfall - yellow
-		"1634":["building_type_pyramid","eecc22","circle"],						#Mountain Peak - yellow
-		"1684":["shop_department_store","10c0f0","circle"],						#Store/shopping - blue
-		"1095":["shop_department_store","10c0f0","circle"],						#Store/shopping - blue	old style shopping icon
-		"1517":["amenity_bar",KMLCOLOR,"circle"],								#Bar/cocktails/lounge - blue, old style icon
-		"979": ["special_sail_boat","a71de1","circle"],							#Passenger ferry - purple
-		"1537":["special_sail_boat",KMLCOLOR,"circle"],							#Auto Ferry
-		"1498":["place_town","0244D1","circle"],								#town/city/village - Google circle with small square in center
-		"1521":["leisure_beach_resort","eecc22","circle"],						#beach - yellow
-		"1703":["amenity_drinking_water","00842b","circle"],					#Water Faucet - green
-		"1781":["sanitary_dump_station","10c0f0","circle"],						#RV Dump station - light blue
-		"1798":["Winery",KMLCOLOR,"circle"],									#Winery - light blue
-		"1636":["Museum",KMLCOLOR,"circle"],									#Museum - light blue
-		"1289":["Museum","10c0f0","circle"],									#Museum - light blue, old style icon
-		"1741":["special_wagon","10c0f0","circle"],								#car rental - light blue
-		"1590":["shop_car_repair","10c0f0","circle"],							#car/tire repair - light blue
-		"1659":["amenity_post_box","10c0f0","circle"],							#post office
-		"1512":["amenity_atm","10c0f0","circle"],								#bank/atm
-		"1870":["sport_scuba_diving",KMLCOLOR,"octagon"],						#scuba, dive, snorkel site, google maps - snorkel mask, OSMAnd scuba diver
-		"1882":["reef",KMLCOLOR,"octagon"],										#reef, tide pool - google maps starfish icon, OSMAnd seahorse/coral
-		"1573":["reef",KMLCOLOR,"octagon"],										#reef, tide pool, fishing spot - google maps fish icon, OSMAnd seahorse/coral
-		"1569":["special_sail_boat",KMLCOLOR,"circle"],							#Passenger Ferry
-		"1741":["special_wagon",KMLCOLOR,"circle"],								#Car Rental
-		"1538":["special_wagon",KMLCOLOR,"circle"],								#Car Rental
-		"1709":["amenity_cinema",KMLCOLOR,"circle"],							#Cinema, movie, theater
-		"1615":["sport_canoe",KMLCOLOR,"circle"],								#Kayak, kayak rental
-		"1598":["historic_castle",KMLCOLOR,"circle"],							#castle, ruins
-		"1670":["building_type_church",KMLCOLOR,"circle"],						#church, mosque, temple
-		"1877":["special_arrow_up_arrow_down",KMLCOLOR,"circle"],				#stairway, for OSMAnd it's up/down arrow icon
+		"unknown":[ICON_NOT_FOUND_ICON, ICON_NOT_FOUND_COLOR, ICON_NOT_FOUND_SHAPE],	#unknown KML icon code - this entry will be used if the KML icon is not found the iconDictionary.
+# These are some of the original gmap icons - bigger, bolder colors, without surrounding circle
+		"503": ["special_marker",						KMLCOLOR,"circle"],			#OldGMap: school map point
+		"979": ["special_sail_boat",					"a71de1","circle"],			#OldGMap: Passenger ferry - purple
+		"993": ["special_photo_camera",					KMLCOLOR,"circle"],			#OldGMap: POI #1, camera "eecc22"
+		"1023":["shop_supermarket",						KMLCOLOR,"circle"],			#OldGMap: grocery store, supermarket #2
+		"1085":["restaurants",							KMLCOLOR,"circle"],			#OldGMap: retaurant, diner, dining
+		"1095":["shop_department_store",				"10c0f0","circle"],			#OldGMap: Store/shopping - blue
+		"1203":["tourism_information",					"1010a0","circle"],			#OldGMap: tourism information
+		"1289":["Museum",								"10c0f0","circle"],			#OldGMap: Museum - light blue
+		"1369":["special_trekking",						KMLCOLOR,"circle"],			#OldGMap: hiking trailhead 
+		"1371":["special_trekking",						KMLCOLOR,"circle"],			#OldGMap: hiking trailhead 
+		"1395":["sport_swimming",						"eecc22","circle"],			#OldGMap: Lake/swimmer - yellow
+# These are the new gmap style icons
+# This list and most of the suggested translations come from this document
+#    https://github.com/mariush444/gmapIcons2osmand/blob/main/icons-gmap-osmand.pdf
+		"1498":["product_brick",						KMLCOLOR,"circle"],			# gmap:shape_default	little square	OSMAnd Alts: military,natural_peak, product_brick
+		"1499":["skimap_white_black_round_shield",		KMLCOLOR,"circle"],			# gmap:shape_circle
+		"1500":["glaziery",								KMLCOLOR,"circle"],			# gmap:shape_square						OSMAnd Alts: chess, glaziery
+		"1501":["natural_peak",							KMLCOLOR,"circle"],			# gmap:shape_diamond					OSMAnd Alts: building_type_pyramid, flooring, natural_peak
+		"1502":["special_star",							KMLCOLOR,"circle"],			# gmap:shape_star						OSMAnd Alts:  shape_star, special_star, special_star_stroked (hollow), tourism_attraction,tourism_yes
+		"1503":["erotic",								KMLCOLOR,"circle"],			# gmap:adult-xxx
+		"1504":["air_transport",						KMLCOLOR,"circle"],			# gmap:airport-plane
+		"1505":["emergency",							KMLCOLOR,"circle"],			# gmap:ambulance
+		"1506":["shop_pet",								KMLCOLOR,"circle"],			# gmap:animal-head
+		"1507":["shop_pet",								KMLCOLOR,"circle"],			# gmap:animal-paw
+		"1508":["animal_shelter",						KMLCOLOR,"circle"],			# gmap:animal-shelter
+		"1509":["amenity_arts_centre",					KMLCOLOR,"circle"],			# gmap:art-palette
+		"1510":["amenity_atm",							KMLCOLOR,"circle"],			# gmap:atm
+		"1511":["attraction_carousel",					KMLCOLOR,"circle"],			# gmap:balloons
+		"1512":["amenity_bank",							KMLCOLOR,"circle"],			# gmap:bank-dollar
+		"1513":["amenity_bank",							KMLCOLOR,"circle"],			# gmap:bank-euro
+		"1514":["amenity_bank",							KMLCOLOR,"circle"],			# gmap:bank-pound
+		"1515":["amenity_bank",							KMLCOLOR,"circle"],			# gmap:bank-yen
+		"1516":["shop_hairdresser",						KMLCOLOR,"circle"],			# gmap:barber-scissors
+		"1517":["amenity_bar",							KMLCOLOR,"circle"],			# gmap:bar-cocktail
+		"1518":["amenity_pub",							KMLCOLOR,"circle"],			# gmap:bar-pub
+		"1519":["sport_baseball",						KMLCOLOR,"circle"],			# gmap:baseball
+		"1520":["sport_basketball",						KMLCOLOR,"circle"],			# gmap:basketball
+		"1521":["leisure_beach_resort",					KMLCOLOR,"circle"],			# gmap:beach						OSMAnd Alts: beach, leisure_beach_resort
+		"1522":["special_bicycle",						KMLCOLOR,"circle"],			# gmap:bicycle
+		"1523":["supervised_yes",						KMLCOLOR,"circle"],			# gmap:binoculars
+		"1524":["hazard",								KMLCOLOR,"circle"],			# gmap:biohazard
+		"1525":["leisure_slipway",						KMLCOLOR,"circle"],			# gmap:boat-launch
+		"1526":["shop_books",							KMLCOLOR,"circle"],			# gmap:book
+		"1527":["sport_9pin",							KMLCOLOR,"circle"],			# gmap:bowling
+		"1528":["bridge_structure_arch",				KMLCOLOR,"circle"],			# gmap:bridge
+		"1529":["communication_tower",					KMLCOLOR,"circle"],			# gmap:broadcast
+		"1530":["restaurants",							KMLCOLOR,"circle"],			# gmap:burger
+		"1531":["bag",									KMLCOLOR,"circle"],			# gmap:business-briefcase
+		"1532":["highway_bus_stop",						KMLCOLOR,"circle"],			# gmap:bus
+		"1533":["funicular",							KMLCOLOR,"circle"],			# gmap:cablecar-funicular
+		"1534":["amenity_cafe",							KMLCOLOR,"circle"],			# gmap:cafe-cup
+		"1535":["camera",								KMLCOLOR,"circle"],			# gmap:camera-photo
+		"1536":["sport_canoe",							KMLCOLOR,"circle"],			# gmap:canoe
+		"1537":["cargo_vehicle",						KMLCOLOR,"circle"],			# gmap:car-ferry
+		"1538":["shop_car",								KMLCOLOR,"circle"],			# gmap:car
+		"1539":["shop_car_repair",						KMLCOLOR,"circle"],			# gmap:car-repair
+		"1540":["amenity_casino",						KMLCOLOR,"circle"],			# gmap:casino-dice
+		"1541":["hazard",								KMLCOLOR,"circle"],			# gmap:caution
+		"1542":["cemetery",								KMLCOLOR,"circle"],			# gmap:cemetery
+		"1543":["drinking_water_yes",					KMLCOLOR,"circle"],			# gmap:chance-rain
+		"1544":["chemist",								KMLCOLOR,"circle"],			# gmap:chemical-beaker
+		"1545":["dovecote",								KMLCOLOR,"circle"],			# gmap:chicken
+		"1546":["place_city",							KMLCOLOR,"circle"],			# gmap:city-buildings
+		"1547":["suburb",								KMLCOLOR,"circle"],			# gmap:city-buildings-pointed
+		"1548":["building",								KMLCOLOR,"circle"],			# gmap:civic
+		"1549":["shop_clothes",							KMLCOLOR,"circle"],			# gmap:clothing-hanger
+		"1550":["cuisine",								KMLCOLOR,"circle"],			# gmap:cloudy
+		"1551":["service",								KMLCOLOR,"circle"],			# gmap:construction-hammer
+		"1552":["amenity_courthouse",					KMLCOLOR,"circle"],			# gmap:courthouse-gavel
+		"1553":["shop_pet",								KMLCOLOR,"circle"],			# gmap:cow
+		"1554":["sport_cricket",						KMLCOLOR,"circle"],			# gmap:cricket
+		"1555":["payment_centre",						KMLCOLOR,"circle"],			# gmap:currency-exchange
+		"1556":["hazard",								KMLCOLOR,"circle"],			# gmap:death-skull
+		"1557":["amenity_dentist",						KMLCOLOR,"circle"],			# gmap:dentist-tooth
+		"1558":["amenity_doctors",						KMLCOLOR,"circle"],			# gmap:doctor-bag
+		"1559":["tourism_hostel",						KMLCOLOR,"circle"],			# gmap:dormitory-bunk-bed
+		"1560":["hazard",								KMLCOLOR,"circle"],			# gmap:earthquake
+		"1561":["electrical",							KMLCOLOR,"circle"],			# gmap:electrical-plug
+		"1562":["shop_car",								KMLCOLOR,"circle"],			# gmap:enclosed-traffic
+		"1563":["military_range",						KMLCOLOR,"circle"],			# gmap:epicenter					OSMAnd Alts: craft_sawmill, motorcycle_parts_yes,military_range
+		"1564":["crater",								KMLCOLOR,"circle"],			# gmap:explosion					OSMAnd Alts: amenity_fire_station, crater
+		"1565":["industrial",							KMLCOLOR,"circle"],			# gmap:factory
+		"1566":["place_farm",							KMLCOLOR,"circle"],			# gmap:farm-barn
+		"1567":["amenity_fast_food",					KMLCOLOR,"circle"],			# gmap:fast-food
+		"1568":["attraction_big_wheel",					KMLCOLOR,"circle"],			# gmap:ferris-wheel
+		"1569":["amenity_ferry_terminal",				KMLCOLOR,"circle"],			# gmap:ferry
+		"1570":["finance",								KMLCOLOR,"circle"],			# gmap:finance
+		"1571":["amenity_fire_station",					KMLCOLOR,"circle"],			# gmap:fire
+		"1572":["shop_seafood",							KMLCOLOR,"circle"],			# gmap:fish-fins
+		"1573":["shop_seafood",							KMLCOLOR,"circle"],			# gmap:fish
+		"1574":["special_flag_start",					KMLCOLOR,"circle"],			# gmap:flag							OSMAnd Alts: locality,special_flag_finish,special_flag (triangle), special_flag_start (square), special_flag_stroke (hollow triangle), windsock (striped triangle)
+		"1575":["hazard_flood",							KMLCOLOR,"circle"],			# gmap:flood
+		"1576":["amenity_pharmacy",						KMLCOLOR,"circle"],			# gmap:fog
+		"1577":["restaurants",							KMLCOLOR,"circle"],			# gmap:food-fork-knife
+		"1578":["food_shop",							KMLCOLOR,"circle"],			# gmap:food-groceries
+		"1579":["american_football",					KMLCOLOR,"circle"],			# gmap:football
+		"1580":["amenity_fountain",						KMLCOLOR,"circle"],			# gmap:fountain
+		"1581":["amenity_fuel",							KMLCOLOR,"circle"],			# gmap:fuel-gasoline
+		"1582":["garden",								KMLCOLOR,"circle"],			# gmap:garden-flower
+		"1583":["barrier_lift_gate",					KMLCOLOR,"circle"],			# gmap:gated-community
+		"1584":["shop_gift",							KMLCOLOR,"circle"],			# gmap:gift
+		"1585":["sport_golf",							KMLCOLOR,"circle"],			# gmap:golf
+		"1586":["aerialway_gondola",					KMLCOLOR,"circle"],			# gmap:gondola
+		"1587":["agrarian",								KMLCOLOR,"circle"],			# gmap:grain
+		"1588":["weapons",								KMLCOLOR,"circle"],			# gmap:gun
+		"1589":["fitness_centre",						KMLCOLOR,"circle"],			# gmap:gym
+		"1590":["service",								KMLCOLOR,"circle"],			# gmap:hardware-wrench
+		"1591":["ranger_station",						KMLCOLOR,"circle"],			# gmap:headquarters
+		"1592":["special_heart",						KMLCOLOR,"circle"],			# gmap:heart
+		"1593":["special_helicopter",					KMLCOLOR,"circle"],			# gmap:helicopter
+		"1594":["special_symbol_question_mark",			KMLCOLOR,"circle"],			# gmap:help
+		"1595":["special_trekking",						KMLCOLOR,"circle"],			# gmap:hiking-duo
+		"1596":["special_trekking",						KMLCOLOR,"circle"],			# gmap:hiking-solo
+		"1597":["special_trekking",						KMLCOLOR,"circle"],			# gmap:hiking-trailhead
+		"1598":["historic_castle",						KMLCOLOR,"circle"],			# gmap:historic-building
+		"1599":["monument",								KMLCOLOR,"circle"],			# gmap:historic-monument
+		"1600":["memorial_plaque",						KMLCOLOR,"circle"],			# gmap:historic-plaque
+		"1601":["special_horse",						KMLCOLOR,"circle"],			# gmap:horse
+		"1602":["tourism_hotel",						KMLCOLOR,"circle"],			# gmap:hotel-bed
+		"1603":["special_house",						KMLCOLOR,"circle"],			# gmap:house
+		"1604":["construction",							KMLCOLOR,"circle"],			# gmap:housing-development
+		"1605":["hazard",								KMLCOLOR,"circle"],			# gmap:hurricane-strong
+		"1606":["hazard",								KMLCOLOR,"circle"],			# gmap:hurricane-weak
+		"1607":["ice_cream",							KMLCOLOR,"circle"],			# gmap:ice-cream
+		"1608":["special_information",					KMLCOLOR,"circle"],			# gmap:info
+		"1609":["special_symbol_at_sign",				KMLCOLOR,"circle"],			# gmap:internet
+		"1610":["cemetery",								KMLCOLOR,"circle"],			# gmap:japanese-cemetery
+		"1611":["special_marker",						KMLCOLOR,"circle"],			# gmap:japanese-poi
+		"1612":["amenity_post_box",						KMLCOLOR,"circle"],			# gmap:japanese-post-office
+		"1613":["shop_jewelry",							KMLCOLOR,"circle"],			# gmap:jewelry
+		"1614":["special_microphone",					KMLCOLOR,"circle"],			# gmap:karaoke
+		"1615":["special_kayak",						KMLCOLOR,"circle"],			# gmap:kayak
+		"1616":["hazard_erosion",						KMLCOLOR,"circle"],			# gmap:landslide
+		"1617":["shop_laundry",							KMLCOLOR,"circle"],			# gmap:laundry-iron
+		"1618":["man_made_lighthouse",					KMLCOLOR,"circle"],			# gmap:lighthouse
+		"1619":["power",								KMLCOLOR,"circle"],			# gmap:lightning???
+		"1620":["shop_pet",								KMLCOLOR,"circle"],			# gmap:lizard-gecko
+		"1621":["observation_tower",					KMLCOLOR,"circle"],			# gmap:lookout-tower
+		"1622":["special_sail_boat",					KMLCOLOR,"circle"],			# gmap:marina-yacht
+		"1623":["leisure_marina",						KMLCOLOR,"circle"],			# gmap:marine-anchor
+		"1624":["amenity_doctors",						KMLCOLOR,"circle"],			# gmap:medical 				OSMAnd Alts: healthcare
+		"1625":["siren",								KMLCOLOR,"circle"],			# gmap:megaphone
+		"1626":["subway_caracas",						KMLCOLOR,"circle"],			# gmap:metro 				OSMAnd Alts: special_subway
+		"1627":["man_made_mineshaft",					KMLCOLOR,"circle"],			# gmap:mine
+		"1628":["special_symbol_question_mark",			KMLCOLOR,"circle"],			# gmap:missing-person
+		"1629":["route_monorail_ref",					KMLCOLOR,"circle"],			# gmap:monorail
+		"1630":["shop_pet",								KMLCOLOR,"circle"],			# gmap:monster-friend
+		"1631":["backrest_yes",							KMLCOLOR,"circle"],			# gmap:moon
+		"1632":["special_motor_scooter",				KMLCOLOR,"circle"],			# gmap:moped
+		"1633":["shop_motorcycle",						KMLCOLOR,"circle"],			# gmap:motorcycle
+		"1634":["natural",								KMLCOLOR,"circle"],			# gmap:mountain
+		"1635":["amenity_cinema",						KMLCOLOR,"circle"],			# gmap:movies-cinema
+		"1636":["tourism_museum",						KMLCOLOR,"circle"],			# gmap:museum
+		"1637":["special_audio",						KMLCOLOR,"circle"],			# gmap:music-note			OSMAnd Alts: music, special_audio
+		"1638":["newspaper",							KMLCOLOR,"circle"],			# gmap:newspaper
+		"1639":["ngo",									KMLCOLOR,"circle"],			# gmap:ngo
+		"1640":["restaurants",							KMLCOLOR,"circle"],			# gmap:noodles
+		"1641":["generator_source_nuclear",				KMLCOLOR,"circle"],			# gmap:nuclear-atomic
+		"1642":["hazard_nuclear",						KMLCOLOR,"circle"],			# gmap:nuclear-radioactive
+		"1643":["shop_optician",						KMLCOLOR,"circle"],			# gmap:optometrist-eye
+		"1644":["parking",								KMLCOLOR,"circle"],			# gmap:parking
+		"1645":["cuisine",								KMLCOLOR,"circle"],			# gmap:partly-cloudy
+		"1646":["amenity_pharmacy",						KMLCOLOR,"circle"],			# gmap:pharmacy
+		"1647":["shop_mobile_phone",					KMLCOLOR,"circle"],			# gmap:phone-mobile
+		"1649":["barrier_cycle_barrier",				KMLCOLOR,"circle"],			# gmap:piano-music-hall
+		"1650":["tourism_picnic_site",					KMLCOLOR,"circle"],			# gmap:picnic-table
+		"1651":["restaurants",							KMLCOLOR,"circle"],			# gmap:pizza-slice
+		"1652":["leisure_playground",					KMLCOLOR,"circle"],			# gmap:playground-swing
+		"1653":["hazard",								KMLCOLOR,"circle"],			# gmap:poison-gas-mask
+		"1654":["geocache",								KMLCOLOR,"circle"],			# gmap:poi-you-are-here
+		"1655":["amenity_police",						KMLCOLOR,"circle"],			# gmap:police-badge
+		"1656":["amenity_police",						KMLCOLOR,"circle"],			# gmap:police-car
+		"1657":["amenity_police",						KMLCOLOR,"circle"],			# gmap:police-officer
+		"1658":["hazard",								KMLCOLOR,"circle"],			# gmap:pollution-spill
+		"1659":["amenity_post_box",						KMLCOLOR,"circle"],			# gmap:post-office-envelope
+		"1660":["power",								KMLCOLOR,"circle"],			# gmap:power-lightning
+		"1661":["special_flag_finish",					KMLCOLOR,"circle"],			# gmap:racetrack-flag
+		"1662":["railway_station",						KMLCOLOR,"circle"],			# gmap:railway-track
+		"1663":["drinking_water_yes",					KMLCOLOR,"circle"],			# gmap:rain
+		"1664":["amenity_library",						KMLCOLOR,"circle"],			# gmap:reading-library
+		"1665":["beach",								KMLCOLOR,"circle"],			# gmap:real-estate
+		"1666":["place_of_worship",						KMLCOLOR,"circle"],			# gmap:religious-bahai
+		"1667":["religion_buddhist",					KMLCOLOR,"circle"],			# gmap:religious-buddhist-hindu
+		"1668":["religion_buddhist",					KMLCOLOR,"circle"],			# gmap:religious-buddhist-wheel
+		"1669":["place_of_worship",						KMLCOLOR,"circle"],			# gmap:religious-buddhist-zen
+		"1670":["religion_christian",					KMLCOLOR,"circle"],			# gmap:religious-christian
+		"1671":["building_type_chapel",					KMLCOLOR,"circle"],			# gmap:religious-generic
+		"1672":["religion_hindu",						KMLCOLOR,"circle"],			# gmap:religious-hindu
+		"1673":["religion_muslim",						KMLCOLOR,"circle"],			# gmap:religious-islamic
+		"1674":["place_of_worship",						KMLCOLOR,"circle"],			# gmap:religious-jain
+		"1675":["religion_jewish",						KMLCOLOR,"circle"],			# gmap:religious-jewish
+		"1676":["place_of_worship",						KMLCOLOR,"circle"],			# gmap:religious-kneeling
+		"1677":["religion_shinto",						KMLCOLOR,"circle"],			# gmap:religious-shinto
+		"1678":["religion_sikh",						KMLCOLOR,"circle"],			# gmap:religious-sikh
+		"1679":["shop_pet",								KMLCOLOR,"circle"],			# gmap:rodent-rat
+		"1680":["special_walking",						KMLCOLOR,"circle"],			# gmap:running-pedestrian
+		"1681":["sport_sailing",						KMLCOLOR,"circle"],			# gmap:sailing-boat
+		"1682":["amenity_school",						KMLCOLOR,"circle"],			# gmap:school-crossing
+		"1683":["shop_shoes",							KMLCOLOR,"circle"],			# gmap:shoe
+		"1684":["shop",									KMLCOLOR,"circle"],			# gmap:shopping-bag
+		"1685":["shop_supermarket",						KMLCOLOR,"circle"],			# gmap:shopping-cart
+		"1686":["food_shop",							KMLCOLOR,"circle"],			# gmap:shop
+		"1687":["shower",								KMLCOLOR,"circle"],			# gmap:shower-bath
+		"1688":["sport_skiing",							KMLCOLOR,"circle"],			# gmap:ski-downhill
+		"1689":["aerialway_chair_lift",					KMLCOLOR,"circle"],			# gmap:ski-lift
+		"1690":["special_ski_touring",					KMLCOLOR,"circle"],			# gmap:ski-xc
+		"1691":["piste_sled",							KMLCOLOR,"circle"],			# gmap:sled
+		"1692":["seasonal_winter",						KMLCOLOR,"circle"],			# gmap:sleet
+		"1693":["man_made_chimney",						KMLCOLOR,"circle"],			# gmap:smokestack
+		"1694":["seasonal_winter",						KMLCOLOR,"circle"],			# gmap:snowflake
+		"1695":["seasonal_winter",						KMLCOLOR,"circle"],			# gmap:snow
+		"1696":["sport_soccer",							KMLCOLOR,"circle"],			# gmap:soccer
+		"1697":["tanning_salon",						KMLCOLOR,"circle"],			# gmap:spa
+		"1698":["sport_stadium",						KMLCOLOR,"circle"],			# gmap:stadium-arena
+		"1699":["bag",									KMLCOLOR,"circle"],			# gmap:suitcase-travel
+		"1700":["seasonal_summer",						KMLCOLOR,"circle"],			# gmap:sunny
+		"1701":["sport_swimming",						KMLCOLOR,"circle"],			# gmap:swimming
+		"1702":["water_tap",							KMLCOLOR,"circle"],			# gmap:tap-dry
+		"1703":["water_tap",							KMLCOLOR,"circle"],			# gmap:tap-flowing
+		"1704":["special_taxi",							KMLCOLOR,"circle"],			# gmap:taxi
+		"1705":["tea",									KMLCOLOR,"circle"],			# gmap:teapot
+		"1706":["historic_castle",						KMLCOLOR,"circle"],			# gmap:temple
+		"1707":["sport_tennis",							KMLCOLOR,"circle"],			# gmap:tennis
+		"1708":["amenity_theatre",						KMLCOLOR,"circle"],			# gmap:theater-lecture
+		"1709":["amenity_theatre",						KMLCOLOR,"circle"],			# gmap:theater
+		"1710":["temperature",							KMLCOLOR,"circle"],			# gmap:thermometer				OSMAnd Alts: height,skimap_arrow_2triangles_black_big,special_arrow_up_and_down,thermometer
+		"1711":["power",								KMLCOLOR,"circle"],			# gmap:thunder
+		"1712":["shop_ticket",							KMLCOLOR,"circle"],			# gmap:ticket
+		"1713":["shop_ticket",							KMLCOLOR,"circle"],			# gmap:ticket-star
+		"1714":["hazard",								KMLCOLOR,"circle"],			# gmap:tornado
+		"1715":["special_poi_eiffel_tower",				KMLCOLOR,"circle"],			# gmap:tower
+		"1716":["railway_station",						KMLCOLOR,"circle"],			# gmap:train
+		"1717":["locomotive",							KMLCOLOR,"circle"],			# gmap:train-steam
+		"1718":["railway_tram_stop",					KMLCOLOR,"circle"],			# gmap:tram-overhead
+		"1719":["railway_tram_stop",					KMLCOLOR,"circle"],			# gmap:tram
+		"1720":["forest",								KMLCOLOR,"circle"],			# gmap:tree
+		"1721":["forest",								KMLCOLOR,"circle"],			# gmap:tree-windy
+		"1722":["special_truck",						KMLCOLOR,"circle"],			# gmap:truck
+		"1723":["water",								KMLCOLOR,"circle"],			# gmap:tsunami					OSMAnd Alts: grass, water, hazard
+		"1724":["tunnel",								KMLCOLOR,"circle"],			# gmap:tunnel
+		"1725":["electronics",							KMLCOLOR,"circle"],			# gmap:tv
+		"1726":["amenity_university",					KMLCOLOR,"circle"],			# gmap:university
+		"1727":["special_video_camera",					KMLCOLOR,"circle"],			# gmap:video
+		"1728":["for_tourists",							KMLCOLOR,"circle"],			# gmap:vista-half
+		"1729":["tourism_viewpoint",					KMLCOLOR,"circle"],			# gmap:vista					OSMAnd Alts: for_tourists, motorcycle_parts_yes, shop_florist, tourism_viewpoint
+		"1730":["volcano",								KMLCOLOR,"circle"],			# gmap:volcano
+		"1731":["special_walking",						KMLCOLOR,"circle"],			# gmap:walking-pedestrian
+		"1732":["male_yes",								KMLCOLOR,"circle"],			# gmap:wc-men
+		"1733":["amenity_toilets",						KMLCOLOR,"circle"],			# gmap:wc-unisex
+		"1734":["female_yes",							KMLCOLOR,"circle"],			# gmap:wc-women
+		"1735":["wheelchair_designated",				KMLCOLOR,"circle"],			# gmap:wheelchair-handicapped
+		"1736":["windsock",								KMLCOLOR,"circle"],			# gmap:wind
+		"1737":["training_yoga",						KMLCOLOR,"circle"],			# gmap:yoga
+		"1739":["military",								KMLCOLOR,"circle"],			# gmap:blank-measle 			OSMAnd Alts: military,barrier_bus_trap, fire_hydrant_type_underground, 
+		"1740":["amenity_school",						KMLCOLOR,"circle"],			# gmap:academy
+		"1741":["amenity_car_rental",					KMLCOLOR,"circle"],			# gmap:car-rental
+		"1742":["baby_hatch",							KMLCOLOR,"circle"],			# gmap:baby-nursery
+		"1743":["tourism_zoo",							KMLCOLOR,"circle"],			# gmap:zoo-elephant
+		"1745":["1787",									KMLCOLOR,"circle"],			# gmap:charging_station_filter
+		"1746":["1787",									KMLCOLOR,"circle"],			# gmap:charging_station
+		"1747":["billiards",							KMLCOLOR,"circle"],			# gmap:8ball
+		"1748":["hazard",								KMLCOLOR,"circle"],			# gmap:accident
+		"1749":["defibrillator",						KMLCOLOR,"circle"],			# gmap:aed
+		"1750":["air_transport",						KMLCOLOR,"circle"],			# gmap:airstrip
+		"1751":["telescope",							KMLCOLOR,"circle"],			# gmap:alien
+		"1752":["sport_archery",						KMLCOLOR,"circle"],			# gmap:archery
+		"1753":["amenity_atm",							KMLCOLOR,"circle"],			# gmap:atm-intl
+		"1754":["special_utv",							KMLCOLOR,"circle"],			# gmap:atv
+		"1755":["badminton",							KMLCOLOR,"circle"],			# gmap:badminton
+		"1756":["amenity_bank",							KMLCOLOR,"circle"],			# gmap:bank-intl
+		"1757":["amenity_bank",							KMLCOLOR,"circle"],			# gmap:bank-jp
+		"1758":["amenity_bank",							KMLCOLOR,"circle"],			# gmap:bank-won
+		"1759":["shop_pet",								KMLCOLOR,"circle"],			# gmap:bear
+		"1760":["leisure_bird_hide",					KMLCOLOR,"circle"],			# gmap:birdwatching
+		"1761":[ICON_NO_TRANSLATION,					KMLCOLOR,"circle"],			# gmap:boxing
+		"1762":["pastry",								KMLCOLOR,"circle"],			# gmap:cake-birthday
+		"1763":["special_camper",						KMLCOLOR,"circle"],			# gmap:camper
+		"1764":["firepit",								KMLCOLOR,"circle"],			# gmap:campfire
+		"1765":["tourism_camp_site",					KMLCOLOR,"circle"],			# gmap:camping_tent
+		"1766":["shop_pet",								KMLCOLOR,"circle"],			# gmap:cat
+		"1767":["natural_cave_entrance",				KMLCOLOR,"circle"],			# gmap:cave
+		"1768":["natural_cave_entrance",				KMLCOLOR,"circle"],			# gmap:caving
+		"1769":["special_symbol_check_mark",			KMLCOLOR,"circle"],			# gmap:checkmark
+		"1770":["craft_sawmill",						KMLCOLOR,"circle"],			# gmap:city-office-jp
+		"1771":["sport_climbing",						KMLCOLOR,"circle"],			# gmap:climbing-carabiner
+		"1772":["sport_climbing_adventure",				KMLCOLOR,"circle"],			# gmap:climbing-ropes
+		"1773":["dance_floor",							KMLCOLOR,"circle"],			# gmap:dancing
+		"1774":["conference_centre",					KMLCOLOR,"circle"],			# gmap:deer
+		"1776":["dovecote",								KMLCOLOR,"circle"],			# gmap:eagle
+		"1777":["sport_diving",							KMLCOLOR,"circle"],			# gmap:diving
+		"1778":["shop_pet",								KMLCOLOR,"circle"],			# gmap:dog
+		"1779":["shop_seafood",							KMLCOLOR,"circle"],			# gmap:dolphin
+		"1780":["dovecote",								KMLCOLOR,"circle"],			# gmap:duck
+		"1781":["sanitary_dump_station",				KMLCOLOR,"circle"],			# gmap:dump-station
+		"1782":["elevator",								KMLCOLOR,"circle"],			# gmap:elevator
+		"1783":["building_entrance",					KMLCOLOR,"circle"],			# gmap:entrance
+		"1784":["conveying_yes",						KMLCOLOR,"circle"],			# gmap:escalator-down
+		"1785":["conveying_yes",						KMLCOLOR,"circle"],			# gmap:escalator-up
+		"1786":["conveying_yes",						KMLCOLOR,"circle"],			# gmap:escalator
+		"1787":["charging_station",						KMLCOLOR,"circle"],			# gmap:ev-station
+		"1788":["historic_battlefield",					KMLCOLOR,"circle"],			# gmap:fencing
+		"1789":["dovecote",								KMLCOLOR,"circle"],			# gmap:finch
+		"1790":["fire_extinguisher",					KMLCOLOR,"circle"],			# gmap:fire-extinguisher
+		"1791":["amenity_fire_station",					KMLCOLOR,"circle"],			# gmap:fire-jp
+		"1792":["frozen_food",							KMLCOLOR,"circle"],			# gmap:food-storage
+		"1793":["shop_pet",								KMLCOLOR,"circle"],			# gmap:fox
+		"1794":["leisure_sports_centre",				KMLCOLOR,"circle"],			# gmap:frisbee
+		"1795":["attraction_animal",					KMLCOLOR,"circle"],			# gmap:gator
+		"1796":["dive",									KMLCOLOR,"circle"],			# gmap:ghost
+		"1797":["attraction_animal",					KMLCOLOR,"circle"],			# gmap:giraffe
+		"1798":["craft_winery",							KMLCOLOR,"circle"],			# gmap:glass 					OSMAnd Alts: amenity_bar, craft_winery, shop_alcohol
+		"1799":["golf_course",							KMLCOLOR,"circle"],			# gmap:golf-course
+		"1800":["barbecue",								KMLCOLOR,"circle"],			# gmap:grill
+		"1801":["club_music",							KMLCOLOR,"circle"],			# gmap:guitar
+		"1802":[ICON_NO_TRANSLATION,					KMLCOLOR,"circle"],			# gmap:hatchet
+		"1803":["special_arrow_down_left",				KMLCOLOR,"circle"],			# gmap:here
+		"1804":["historic_manor",						KMLCOLOR,"circle"],			# gmap:historic-cn
+		"1805":["ice_hockey",							KMLCOLOR,"circle"],			# gmap:hockey
+		"1806":["clinic",								KMLCOLOR,"circle"],			# gmap:hospital-crescent
+		"1807":["clinic",								KMLCOLOR,"circle"],			# gmap:hospital-h
+		"1808":["clinic",								KMLCOLOR,"circle"],			# gmap:hospital-shield
+		"1809":["sauna",								KMLCOLOR,"circle"],			# gmap:hot-tub
+		"1810":["restaurants",							KMLCOLOR,"circle"],			# gmap:hotdog
+		"1811":["natural_hot_spring",					KMLCOLOR,"circle"],			# gmap:hotspring-onsen
+		"1812":["amenity_hunting_stand",				KMLCOLOR,"circle"],			# gmap:hunting
+		"1813":["reef",									KMLCOLOR,"circle"],			# gmap:jellyfish
+		"1814":[ICON_NO_TRANSLATION,					KMLCOLOR,"circle"],			# gmap:jetski
+		"1815":["attraction_animal",					KMLCOLOR,"circle"],			# gmap:kangaroo
+		"1816":["kitchen",								KMLCOLOR,"circle"],			# gmap:kitchen
+		"1817":[ICON_NO_TRANSLATION,					KMLCOLOR,"circle"],			# gmap:kitesurfing
+		"1818":["dovecote",								KMLCOLOR,"circle"],			# gmap:kiwi
+		"1819":["reef",									KMLCOLOR,"circle"],			# gmap:kraken
+		"1820":["shop_computer",						KMLCOLOR,"circle"],			# gmap:laptop
+		"1821":["shop_laundry",							KMLCOLOR,"circle"],			# gmap:laundry
+		"1822":["attraction_animal",					KMLCOLOR,"circle"],			# gmap:lion
+		"1823":["craft_locksmith",						KMLCOLOR,"circle"],			# gmap:locker
+		"1824":["special_symbol_question_mark",			KMLCOLOR,"circle"],			# gmap:lost-and-found
+		"1825":["judo",									KMLCOLOR,"circle"],			# gmap:martial-arts
+		"1826":["emergency_access_point",				KMLCOLOR,"circle"],			# gmap:meeting-point
+		"1827":[ICON_NO_TRANSLATION,					KMLCOLOR,"circle"],			# gmap:message-in-a-bottle
+		"1828":["attraction_animal",					KMLCOLOR,"circle"],			# gmap:monkey
+		"1829":["customs",								KMLCOLOR,"circle"],			# gmap:moose
+		"1831":["dance_floor",							KMLCOLOR,"circle"],			# gmap:mosquito
+		"1832":["deadlock",								KMLCOLOR,"circle"],			# gmap:moustache
+		"1834":["tourism_museum",						KMLCOLOR,"circle"],			# gmap:museum-jp
+		"1835":["restaurants",							KMLCOLOR,"circle"],			# gmap:musubi-sushi
+		"1836":["smoking_no",							KMLCOLOR,"circle"],			# gmap:no-smoking
+		"1837":["piste_nordic",							KMLCOLOR,"circle"],			# gmap:nordic-walking
+		"1838":["sport_free_flying",					KMLCOLOR,"circle"],			# gmap:parachute
+		"1839":["dovecote",								KMLCOLOR,"circle"],			# gmap:parrot
+		"1840":["dovecote",								KMLCOLOR,"circle"],			# gmap:penguin
+		"1841":["amenity_pharmacy",						KMLCOLOR,"circle"],			# gmap:pharmacy-eu
+		"1842":["amenity_police",						KMLCOLOR,"circle"],			# gmap:police-jp
+		"1843":["equestrian",							KMLCOLOR,"circle"],			# gmap:polo
+		"1844":["shop_baby_goods",						KMLCOLOR,"circle"],			# gmap:pram-stroller
+		"1845":["shop_copyshop",						KMLCOLOR,"circle"],			# gmap:printer
+		"1846":["dovecote",								KMLCOLOR,"circle"],			# gmap:quotation
+		"1847":["hunting",								KMLCOLOR,"circle"],			# gmap:rabbit
+		"1848":["shop_pet",								KMLCOLOR,"circle"],			# gmap:raccoon
+		"1849":["sport_tennis",							KMLCOLOR,"circle"],			# gmap:racquetball
+		"1850":["recycling_centre",						KMLCOLOR,"circle"],			# gmap:recycling
+		"1851":["attraction_animal",					KMLCOLOR,"circle"],			# gmap:rhino
+		"1852":[ICON_NO_TRANSLATION,					KMLCOLOR,"circle"],			# gmap:roach
+		"1853":["quarry",								KMLCOLOR,"circle"],			# gmap:road-work-construction
+		"1854":["educational_institution",				KMLCOLOR,"circle"],			# gmap:robot
+		"1856":["telescope",							KMLCOLOR,"circle"],			# gmap:rocket
+		"1857":["waste_basket",							KMLCOLOR,"circle"],			# gmap:rubbish-trash
+		"1858":["sport_rugby_union",					KMLCOLOR,"circle"],			# gmap:rugby
+		"1859":["special_campervan",					KMLCOLOR,"circle"],			# gmap:rv
+		"1860":["amenity_school",						KMLCOLOR,"circle"],			# gmap:school-cn
+		"1861":["sport_scuba_diving",					KMLCOLOR,"circle"],			# gmap:scuba
+		"1862":["email",								KMLCOLOR,"circle"],			# gmap:seal
+		"1863":["shop_seafood",							KMLCOLOR,"circle"],			# gmap:shark
+		"1864":["wreck",								KMLCOLOR,"circle"],			# gmap:shipwreck
+		"1865":["shower",								KMLCOLOR,"circle"],			# gmap:showers
+		"1866":["sport_skateboard",						KMLCOLOR,"circle"],			# gmap:skateboarding
+		"1867":["ice_skating",							KMLCOLOR,"circle"],			# gmap:skating-ice
+		"1868":["smoking_yes",							KMLCOLOR,"circle"],			# gmap:smoking
+		"1869":[ICON_NO_TRANSLATION,					KMLCOLOR,"circle"],			# gmap:snake
+		"1870":["scuba_diving_shop",					KMLCOLOR,"circle"],			# gmap:snorkel
+		"1871":["entertainment",						KMLCOLOR,"circle"],			# gmap:snowboarding
+		"1872":["special_snowmobile",					KMLCOLOR,"circle"],			# gmap:snowmobile
+		"1873":["piste_hike",							KMLCOLOR,"circle"],			# gmap:snowshoeing
+		"1874":["dovecote",								KMLCOLOR,"circle"],			# gmap:songbird
+		"1875":["sport_tennis",							KMLCOLOR,"circle"],			# gmap:squash
+		"1876":["shop_pet",								KMLCOLOR,"circle"],			# gmap:squirrel
+		"1877":["highway_steps",						KMLCOLOR,"circle"],			# gmap:stairs
+		"1878":["telescope_type_optical",				KMLCOLOR,"circle"],			# gmap:stargazing-telescope
+		"1879":["amenity_biergarten",					KMLCOLOR,"circle"],			# gmap:stein-beer
+		"1880":["sport_surfing",						KMLCOLOR,"circle"],			# gmap:surfing
+		"1881":["sport_sailing",						KMLCOLOR,"circle"],			# gmap:tall-ship
+		"1882":["reef",									KMLCOLOR,"circle"],			# gmap:tidepool-starfish
+		"1883":["craft_agricultural_engines",			KMLCOLOR,"circle"],			# gmap:tractor
+		"1884":["highway_traffic_signals",				KMLCOLOR,"circle"],			# gmap:traffic-light
+		"1885":[ICON_NO_TRANSLATION,					KMLCOLOR,"circle"],			# gmap:treasure-chest
+		"1886":["nature_reserve",						KMLCOLOR,"circle"],			# gmap:tree-deciduous
+		"1887":["female_no",							KMLCOLOR,"circle"],			# gmap:tree-palm
+		"1888":["reef",									KMLCOLOR,"circle"],			# gmap:turtle
+		"1889":["telescope",							KMLCOLOR,"circle"],			# gmap:ufo
+		"1890":["sport_volleyball",						KMLCOLOR,"circle"],			# gmap:volleyball
+		"1891":["backrest_yes",							KMLCOLOR,"circle"],			# gmap:waiting-room
+		"1892":["waterfall",							KMLCOLOR,"circle"],			# gmap:waterfall
+		"1893":["sports_hall",							KMLCOLOR,"circle"],			# gmap:weight-barbell
+		"1894":["shop_seafood",							KMLCOLOR,"circle"],			# gmap:whale					OSMAnd Alts: shop_seafood, leisure_fishing, reef
+		"1895":["internet_access_wlan",					KMLCOLOR,"circle"],			# gmap:wifi
+		"1896":["firepit",								KMLCOLOR,"circle"],			# gmap:windsurfing
+		"1897":["free_flying",							KMLCOLOR,"circle"],			# gmap:wingsuit
+		"1898":["special_symbol_remove",				KMLCOLOR,"circle"],			# gmap:x-cross					OSMAnd Alts: level_crossing, special_symbol_remove
+		"1899":["special_marker",						KMLCOLOR,"circle"],			# gmap:blank-shape_pin
 	}
 	
 	waypt = cWaypoint("unknown",KMLCOLOR,"circle")
