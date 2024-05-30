@@ -1,7 +1,0 @@
-# This is a comment
-# <Name>,<mapID>
-# <Name> String to use as file name when processing file
-# <mapID> Unique string ID from the URL of the google map. Founds after the mid= in the map URL
-#
-C:\Users\Tom\Downloads\Multi-day trips,1m3s1vJU4GEw1cgfa_ehgCRat5jJtcjMw
-C:\Users\Tom\Downloads\Alameda Creek,1EvnP1qTMFX1kxlnNHCKugFo-nxFKAiw
