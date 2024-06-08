@@ -1,14 +1,14 @@
 # GoogleMapToOSMAndGPX
-Create a folder of OSMAnd GPX files from a google my maps map
+Create a folder of OSMAnd GPX files from a google my maps map (GMap)
 
-It's a python utility that works directly from a google map (using it's map ID) to export the map's KML data and directly convert it into a folder of OSMAnd style GPX files. Both tracks and waypoints and translated.   Descriptions, icon symbol, icon color, track color, track width are all translated. Each track is put in it's own GPX file and all waypoints are put in a single GPX file. Each track is put in it's own GPX file and all waypoints are put in a single GPX file.
+It's a python utility that works directly from a google map (using it's map ID) to export the map's KML data and directly convert it into a folder of OSMAnd style GPX files. Both tracks and waypoints and translated.   Descriptions, icon symbol, icon color, track color, track width are all translated. Each track is put in it's own GPX file and all waypoints are put in a single GPX file. 
 ## Syntax
 ```
 py GoogleMapToOSMAndGPX.py <map_id> <gpx_path> <width 1-24> -t <transparency 00 to FF> -s <split type> -i <split interval miles/seconds> -a -e
 ``` 
 Parm | Long Parm | Description
 --- | --- | ---
-map_id | | Required: The google map id of the map to be converted.  The map_id is found in the URL when the map is being displayed in a browser.  It the string of characters between mid= and & in the map url.  The map must have sharing enabled.
+map_id | | Required: The GMap id of the map to be converted.  The map_id is found in the URL when the map is being displayed in a browser.  It the string of characters between mid= and & in the map url.  The map must have sharing enabled.
 gpx_path | | Required: Path name for the created GPX files.  If it doesn't exist a folder of this name is created.  If the folder exists any existing files are NOT deleted, but files with the same names will be overwritten.
 -t | --transparency | Transparency value to use for all tracks.  Specified as a 2 digit hex value without the preceeding "0x".  00 is fully transparent and FF is opaque.
 -a | --arrows | When present, OSMAnd will display directional arrows on a track.
@@ -16,6 +16,7 @@ gpx_path | | Required: Path name for the created GPX files.  If it doesn't exist
 -s | --split | Display distance or time splits along tracks. Accepted values are: no_split, distance, time.  Default: no_split NOTE: The split and interval tags appear to be ignored by OSMAnd when placed in a track GPX file. The XML is identical to what OSMAnd generates when you edit a track's appearance to turn on splits and export the track.
 -i | --interval | Distance in miles or time in seconds to display splits on track.  Split type (-s) must also be defined. Default: 1.0)
 -w | --width | If present, this track width is used for all track widths, overiding values found in the KML file.
+-l | --layers | If present, will create a subdirectory under the gpx_path for each layer in the GMap file. Each of these layer subdirectories will contain a GPX file for each track and one for all the waypoints. 
 
 ## Using GPX files with OSMAnd
 NOTE: Starting with Android 11 there are enhanced file protection protocals put in place that prevent you from accessing the files in the Android/obb/net.osmand.plus folders. You can change this location to that is accessible by other Android applications by going to settings/OSMAnd settings/Data storage folder and selecting manually specified /storage/emulated/0/Android/media/net.osmand.plus/files.
