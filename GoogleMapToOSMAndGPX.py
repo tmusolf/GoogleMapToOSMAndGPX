@@ -11,6 +11,7 @@
 #
 # 5/17/2024: V1.0 Initial version
 # 5/20/2024: V1.1 Updated icon translation table 
+# 6/7/2024:  V1.2 Added -l option to write out files as layers
 #========================================================================================
 import sys
 import argparse
@@ -22,7 +23,7 @@ import os.path
 from pathlib import Path
 
 PROGRAM_NAME = Path(sys.argv[0]).stem
-PROGRAM_VERSION = "1.1"
+PROGRAM_VERSION = "1.2"
 DEFAULT_TRACK_TRANSPARENCY = "80"
 DEFAULT_WAYPOINT_DESCRIPTION = ""
 DEFAULT_TRACK_DESCRIPTION = ""
@@ -46,6 +47,7 @@ GET_URL_SUFFIX = ""
 # globals to keep track of some counts
 countTotalWaypoints = 0
 countTotalTracks = 0
+countTotalLayers = 0
 #========================================================================================
 class cWaypoint:
 	def __init__ (self,icon,color,background):
@@ -88,12 +90,16 @@ def setupParseCmdLine():
 		required=False,
 		choices=[SPLIT_TYPE_NONE, SPLIT_TYPE_DISTANCE, SPLIT_TYPE_TIME],
 		default=DEFAULT_TRACK_SPLIT_TYPE, 
-		help="Display distance or time splits along tracks. Default: "+str(DEFAULT_TRACK_SPLIT_TYPE))
+		help="Display distance or time splits along tracks. Default: "+str(DEFAULT_TRACK_SPLIT_TYPE)),
 	parser.add_argument('-i', '--interval', 
 		action='store',
 		required=False,
 		default=DEFAULT_TRACK_SPLIT_INTERVAL, 
-		help="Distance in miles or time in seconds to display splits on track.  Split type must also be defined. Default: "+str(DEFAULT_TRACK_SPLIT_INTERVAL))
+		help="Distance in miles or time in seconds to display splits on track.  Split type must also be defined. Default: "+str(DEFAULT_TRACK_SPLIT_INTERVAL)),
+	parser.add_argument('-l', '--layers', 
+		action='store_true',
+		required=False,
+		help="If present, under the GPX path name a nested folder will be created for each, non-empty, layer found in the KML file.  Each of these folders will contain a single GPX file containing all of the waypoints in the KML file and one GPX file for each track found in the layer.")
 
 	return(parser.parse_args())
 #========================================================================================
@@ -623,33 +629,33 @@ def getMapKMLData(args):
 			# Successful GET request
 			returnCode = 0
 		case 403:
-			print("  Error: 403 Share permision for map not set")
+			print(f"  ERROR: 403 Share permision for map not set")
 			returnCode = 403
 		case 404:
-			print("  Error: 404 Bad map ID value")
+			print(f"  ERROR: 404 Bad map ID value")
 			returnCode = 404
 		case _:
-			print(f"  Error: An unexpected error occurred: {str(response.status_code)}")
+			print(f"  ERROR: An unexpected error occurred: {str(response.status_code)}")
 			returnCode = response.status_code
 	return(returnCode,response.text)
 #========================================================================================
 # processWaypoint
 #========================================================================================
 def processWaypoint(placemark,waypointGPX):
-	print("  Waypoint: ", end="")
+	print(f"      Waypoint: ", end="")
 	coordinates = placemark.find(".//{http://www.opengis.net/kml/2.2}coordinates")
 	name        = placemark.find(".//{http://www.opengis.net/kml/2.2}name")
 	description = placemark.find(".//{http://www.opengis.net/kml/2.2}description")
 	style_url   = placemark.findtext(".//{http://www.opengis.net/kml/2.2}styleUrl")
 
 	if name is None:
-		print("No name found, skipping waypoint,end=""")
+		print(f"No name found, skipping waypoint",end="")
 	else:
 		name = name.text.strip()
-		print(name+" ", end="")
+		print(f"{name} ", end="")
 
 		if coordinates is None:
-			print(" No coordinates found, skipping waypoint",end="")
+			print(f" No coordinates found, skipping waypoint",end="")
 		else:
 			coordinates = coordinates.text.strip().split(",")
 			longitude   = coordinates[0]
@@ -698,12 +704,12 @@ def processWaypoint(placemark,waypointGPX):
 			ET.SubElement(extensionsElement,"osmand:background").text = waypt.background
 			ET.SubElement(extensionsElement, "osmand:color").text = "#" + waypt.color
 	print("")
-	return
+	return(0)
 #========================================================================================
 # processTrack
 #========================================================================================
-def processTrack(placemark,args):
-	print("  Track: ",end="")
+def processTrack(placemark,args,layerFolderName):
+	print(f"      Track:    ",end="")
 
 	coordinates = placemark.find(".//{http://www.opengis.net/kml/2.2}coordinates")
 	name        = placemark.find(".//{http://www.opengis.net/kml/2.2}name")
@@ -784,22 +790,78 @@ def processTrack(placemark,args):
 			allowedChars = " ._-"
 			name = "".join(i for i in name if (i.isalnum() or i in allowedChars))
 			#print("  name: ",name,end="")
-			filename = os.path.join(args.GPX_path, name+'.gpx')
+			filename = os.path.join(layerFolderName, name+'.gpx')
 			#print("  Writing track to file: ",filename,end="")
 			returnCode = writeGPXFile(GPXElement,filename)
 	print("")
 	return(returnCode)
+#========================================================================================
+# 
+#========================================================================================
+def processLayer(element,args):
+	global countTotalTracks
+	global countTotalWaypoints
+	global countTotalLayers
+	returnCode = 0
+	countLayerTracks = 0
+	countLayerWaypoints = 0
+	countTotalLayers += 1
+
+	# all waypoints get put into the same GPX file
+	waypointGPX = addGPXElement()
+	if args.layers:
+		# Extract the layer name from the KML file
+		layerName = element.find('{http://www.opengis.net/kml/2.2}name').text
+		layerFolderName = os.path.join(args.GPX_path, Path(args.GPX_path).stem+"-"+layerName)
+		layerFolderName = os.path.join(args.GPX_path, layerName)
+		print(f"    Layer #{countTotalLayers:>2}    layer: {layerName}")
+		print(f"      Output directory: {layerFolderName}")
+		# Create a directory for the layer's GPX files
+		try:
+			os.makedirs(layerFolderName, exist_ok=True)
+		except Exception as e:
+			print(f"      ERROR: An unexpected error occurred creating layer GPX file directory: {str(e)}")
+			return(10)
+	else:
+		layerFolderName = args.GPX_path
+
+	for placemark in element.findall(".//{http://www.opengis.net/kml/2.2}Placemark"):
+		if placemark.find(".//{http://www.opengis.net/kml/2.2}Point") is not None:
+			returnCode = processWaypoint(placemark,waypointGPX)
+			if returnCode != 0:
+				return(returnCode)
+			countLayerWaypoints += 1
+			countTotalWaypoints += 1
+		elif placemark.findall(".//{http://www.opengis.net/kml/2.2}LineString") is not None:
+			returnCode = processTrack(placemark,args,layerFolderName)
+			if returnCode != 0:
+				break	# error in processing track, stop further processing
+			countLayerTracks += 1
+			countTotalTracks += 1
+
+	if countLayerWaypoints > 0:
+		# Write waypoints to a GPX file
+		waypointFileName = os.path.join(layerFolderName, "WayPts.gpx")
+		print(f"      Writing waypoints to file: {waypointFileName}")
+		returnCode = writeGPXFile(waypointGPX,waypointFileName)
+		if returnCode != 0:
+			return(returnCode)
+
+	print(f"      Waypoints: {countLayerWaypoints:>3}")
+	print(f"      Tracks:    {countLayerTracks:>3}")
+	return(0)
 #========================================================================================
 # Main
 #========================================================================================
 def main():
 	global countTotalTracks
 	global countTotalWaypoints
+	global countTotalLayers
 
 	# Parse the command line arguments
 	args = setupParseCmdLine()
 
-	waypointFileName = os.path.join(args.GPX_path, "WayPts-"+Path(args.GPX_path).stem+".gpx")
+	layerFolderPrefix = args.GPX_path
 
 	print("")
 	print("Google map to OSMAnd GPX file conversion, one track per file.")
@@ -807,7 +869,9 @@ def main():
 	print("  Version:                ", PROGRAM_VERSION)
 	print("  MapID:                  ", args.map_id)
 	print("  Output folder:          ", args.GPX_path)
-	print("  Waypt file name:        ", waypointFileName)
+	print("  Separate layer folders: ", args.layers)
+	if args.layers:
+		print("  Layer folder prefix:    ", layerFolderPrefix)
 	print("  Transparency value: 0x  ", args.transparency)
 	print("  Track width:            ", args.width)
 	print("  Track split:            ", args.split)
@@ -817,40 +881,49 @@ def main():
 	print("")
 	print("  Get map KML data")
 	returnCode,KMLData = getMapKMLData(args)
+	#print(KMLData)
 	if returnCode == 0:
-		
-		# Create a folder for GPX files
+		# Parse the KML data
+		tree = ET.ElementTree(ET.fromstring(KMLData))
+		root = tree.getroot()
+		mapName = root.find(".//{http://www.opengis.net/kml/2.2}name").text
+		print(f"  Map: {mapName}")
+		print(f"  ID:  {args.map_id}")
+
+		# Create a directory for GPX files
+		print(f"  Output directory:     {args.GPX_path}")
 		try:
 			os.makedirs(args.GPX_path, exist_ok=True)
-			# Create waypoint GPX file
-			waypointGPX = addGPXElement()
-
-			# Parse the KML data
-			tree = ET.ElementTree(ET.fromstring(KMLData))
-			root = tree.getroot()
-
-			for placemark in root.findall(".//{http://www.opengis.net/kml/2.2}Placemark"):
-				if placemark.find(".//{http://www.opengis.net/kml/2.2}Point") is not None:
-					processWaypoint(placemark,waypointGPX)
-					countTotalWaypoints += 1
-				elif placemark.findall(".//{http://www.opengis.net/kml/2.2}LineString") is not None:
-					returnCode = processTrack(placemark,args)
+			layers = root.iter('{http://www.opengis.net/kml/2.2}Folder')
+			# Exporting KML data from a GMap will always have at least one layer
+			layers = root.iter('{http://www.opengis.net/kml/2.2}Folder')
+			if args.layers:
+				# If layers arg is set we create a subdirectory under the GPX_path for each non-empty layer
+				# Each of these subdirectories will contain:
+				#	o A waypoints GPX file containing all of the waypoints in the layer.
+				#	o A track GPX file for each track in the layer
+				for layer in layers:
+					returnCode = processLayer(layer,args)
 					if returnCode != 0:
-						break	# error in processing track, stop further processing
-					countTotalTracks += 1
-			
-			if returnCode == 0:
-				if countTotalWaypoints > 0:
-					# Write waypoints to a GPX file
-					print(f"  Writing waypoints to file: {waypointFileName}")
-					returnCode = writeGPXFile(waypointGPX,waypointFileName)
+						break
+			else:
+				# # If layers arg is NOT set we create the following files
+				# #	o A waypoints GPX file containing all of the waypoints in the KML file.
+				# #	o A track GPX file for each track in the KML file
+				# # We are not handling layers separately so use the root tree
+				# # when processing waypoints and tracks.  Using root will return all
+				# # of the waypoints and tracks regardless of if they are in a layer or not.
+				# layers = root.iter('{http://www.opengis.net/kml/2.2}Folder')
+				returnCode = processLayer(root,args)
 		except Exception as e:
-			print(f"  Error: An unexpected error occurred creating GPX file directory: {str(e)}")
+			print(f"  ERROR: An unexpected error occurred creating GPX file directory: {str(e)}")
 			returnCode = 9
 	print("")
 	print(f"  Total waypoint count: {countTotalWaypoints:>3}")
 	print(f"  Total track count:    {countTotalTracks:>3}")
-	print(f"  Return code:          {returnCode}")
+	if args.layers:
+		print(f"  Total layer count:    {countTotalLayers:>3}")
+	print(f"  Return code:            {returnCode}")
 	return(returnCode)
 #========================================================================================
 #
