@@ -81,7 +81,9 @@ Here is an example of the GPX XML code created by this utility for waypoints.
 ```
 
 ## Google Map Layers
-A google map can have layers as a way to organize the waypoints and tracks.  This structure is ignored by this utility and all waypoints are put into a single file and each track is put into it's own file.
+A google map can have layers as a way to organize the waypoints and tracks.  By default, this structure is ignored.  A directory <gpx_path> is created containing a single GPX file for all waypoints found in the GMap and one GPX file for each track in the GMap. 
+
+Using the -l parameter the layer organization is preserved.  A subdirectory, named after the layer, is created under <gpx_path>for each layer.  Each of these subdirectories will contain a GPX file for each track in the layer and one GPX file containing all of the waypoints in the layer.
 
 ## Batch File
 There is a batch file example which allows you to create a text file containing lines of comma separated paths and map ids. These files can then be fed to the batch file and it will call this utility once for each pair/line in the file.  This is a quick way to update the GPX files from a large group of google maps without having to do them individually.
