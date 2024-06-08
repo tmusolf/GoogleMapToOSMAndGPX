@@ -816,13 +816,14 @@ def processLayer(element,args):
 		layerFolderName = os.path.join(args.GPX_path, layerName)
 		print(f"    Layer #{countTotalLayers:>2}    layer: {layerName}")
 		print(f"      Output directory: {layerFolderName}")
-		# Create a directory for the layer's GPX files
+		# Create a subdirectory for the layer's GPX files
 		try:
 			os.makedirs(layerFolderName, exist_ok=True)
 		except Exception as e:
 			print(f"      ERROR: An unexpected error occurred creating layer GPX file directory: {str(e)}")
 			return(10)
 	else:
+		# All files are placed at the GPX_path level, no subfolders
 		layerFolderName = args.GPX_path
 
 	for placemark in element.findall(".//{http://www.opengis.net/kml/2.2}Placemark"):
