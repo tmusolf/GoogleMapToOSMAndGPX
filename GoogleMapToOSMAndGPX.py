@@ -95,7 +95,7 @@ def setupParseCmdLine():
 		action='store',
 		required=False,
 		default=DEFAULT_TRACK_SPLIT_INTERVAL, 
-		help="Distance in miles or time in seconds to display splits on track.  Split type must also be defined. Default: "+str(DEFAULT_TRACK_SPLIT_INTERVAL)),
+		help="Distance in miles or time in minutes to display splits on track.  Split type must also be defined. Default: "+str(DEFAULT_TRACK_SPLIT_INTERVAL)),
 	parser.add_argument('-l', '--layers', 
 		action='store_true',
 		required=False,

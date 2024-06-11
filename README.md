@@ -14,7 +14,7 @@ gpx_path | | Required: Path name for the created GPX files.  If it doesn't exist
 -a | --arrows | When present, OSMAnd will display directional arrows on a track.
 -e | --ends | When present, OSMAnd will display start and finish icons at the ends of the track.
 -s | --split | Display distance or time splits along tracks. Accepted values are: no_split, distance, time.  Default: no_split NOTE: The split and interval tags appear to be ignored by OSMAnd when placed in a track GPX file. The XML is identical to what OSMAnd generates when you edit a track's appearance to turn on splits and export the track.
--i | --interval | Distance in miles or time in seconds to display splits on track.  Split type (-s) must also be defined. Default: 1.0)
+-i | --interval | Distance in miles or time in minutes to display splits on track.  Split type (-s) must also be defined. Default: 1.0)
 -w | --width | If present, this track width is used for all track widths, overiding values found in the KML file.
 -l | --layers | If present, will create a subdirectory under the gpx_path for each layer in the GMap file. Each of these layer subdirectories will contain a GPX file for each track and one for all the waypoints. 
 
