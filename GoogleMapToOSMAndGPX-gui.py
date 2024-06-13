@@ -3,6 +3,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 import subprocess
 import os
+import sys
 import re
 import string
 
@@ -47,20 +48,20 @@ def extract_map_id(url):
 	return map_id
 
 def is_valid_hex(hex_str):
-    """
-    Check if a string is a valid hexadecimal value between 00 and ff.
-    
-    Args:
-        hex_str (str): The string to check.
-        
-    Returns:
-        bool: True if the string is a valid hexadecimal value between 00 and ff, False otherwise.
-    """
-    hex_pattern = r'^([0-9a-fA-F]{2})$'
-    if re.match(hex_pattern, hex_str):
-        value = int(hex_str, 16)
-        return 0 <= value <= 255
-    return False
+	"""
+	Check if a string is a valid hexadecimal value between 00 and ff.
+	
+	Args:
+		hex_str (str): The string to check.
+		
+	Returns:
+		bool: True if the string is a valid hexadecimal value between 00 and ff, False otherwise.
+	"""
+	hex_pattern = r'^([0-9a-fA-F]{2})$'
+	if re.match(hex_pattern, hex_str):
+		value = int(hex_str, 16)
+		return 0 <= value <= 255
+	return False
 
 def show_help():
     execute_program(EXE_PROGRAM, '--help')
@@ -139,6 +140,10 @@ def execute_program(exe_program,parm):
 					return
 				command.extend(['--interval',str(interval_value)])
 	#print("command:",command)
+	if not os.path.isfile(EXE_PROGRAM):
+		cwdir = os.getcwd()
+		messagebox.showerror("Error",EXE_PROGRAM+" utility program file missing from the current directory: "+cwdir)
+		return
 	process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 	stdout, stderr = process.communicate()
 
@@ -163,11 +168,16 @@ def exit_program():
 	root.destroy()
 
 root = tk.Tk()
-root.title("Google Map to OSMAnd style GPX file converter V1.0")
-root.geometry("800x600")
+root.title("Google Map to OSMAnd style GPX file converter V1.1")
+root.geometry("800x660")
+# https://icoconvert.com/ to create icon file in multiple sizes from png file
+# If "compiling" into a windows exe using pyinstaller/auto-py-to-exe using the --icon option to load icon.ico into the file
+# specifying sys.executable will then pull the icon out of the executable without having to carry a separate icon file around.
+root.iconbitmap(sys.executable) 
+
 
 # Instruction text
-instruction_text = "Takes a custom google map and exports its KML data and directly converts it into a folder of OSMAnd style GPX files. Both tracks and waypoints and translated. Descriptions, icon symbol, icon color, track color, track width are all translated. Each track is put in it's own GPX file and all waypoints are put in a single GPX file.  \nNote: The map must have sharing enabled."
+instruction_text = "Takes a custom google map and exports its KML data and directly converts it into a folder of OSMAnd style GPX files. Both tracks and waypoints and translated. Descriptions, icon symbol, icon color, track color, track width are all translated. Each track is put in it's own GPX file and all waypoints are put in a single GPX file.\n\nThis program is a GUI wrapper. The actual conversion is performed by the command line utility: "+EXE_PROGRAM+"\n\nNote: The google map must have sharing enabled."
 instruction_label = tk.Label(root, text=instruction_text, wraplength=700)
 instruction_label.grid(row=0, column=0, columnspan=5, padx=10, pady=5)
 instruction_label.config(justify="left")
@@ -183,11 +193,11 @@ directory_label.grid(row=2, column=0, padx=10, pady=5, sticky="w")
 directory_entry = tk.Entry(root, width=80)
 directory_entry.grid(row=2, column=1, columnspan=3, padx=10, pady=5, sticky="ew")
 directory_entry.config(justify="left")	# Align left
-Tooltip(directory_entry, "Enter the path of an existing directory for the OSMAnd GPX output files.")
+Tooltip(directory_entry, "Enter the path of an existing directory for the created GPX files.")
 
 browse_button = tk.Button(root, text="Browse", command=browse_directory)
 browse_button.grid(row=2, column=4, padx=10, pady=5, sticky="ew")
-Tooltip(browse_button, "Browse to the path of an existing directory for the OSMAnd GPX output files.")
+Tooltip(browse_button, "Browse to the path of an existing directory for the created GPX files.")
 
 # Map URL Entry
 map_url_label = tk.Label(root, text="Map URL:")
@@ -219,21 +229,21 @@ Tooltip(ends_checkbox, "If checked, OSMAnd will display start and finish icons a
 width_var = tk.BooleanVar()
 width_checkbox = tk.Checkbutton(root, text="Width", variable=width_var)
 width_checkbox.grid(row=5, column=0, padx=10, pady=1, sticky="w")
-Tooltip(width_checkbox, "If checked, the width value [1-24] will be used as the OSMAnd track line width.")
+Tooltip(width_checkbox, "If checked, the width value [1-24] will be used as the OSMAnd track line width for all processed tracks.")
 width_entry = tk.Entry(root)
 width_entry.grid(row=5, column=1, padx=10, pady=1, sticky="ew")
 width_entry.config(justify="left")	# Align left
-Tooltip(width_entry, "Line width to be used by OSMAnd for the tracks processed.\nSpecified as a value [1-24]. Value of 1 is narrow and 24 is thick.\nWidth must be checked.")
+Tooltip(width_entry, "Line width to be used for all the processed tracks.\nSpecified as a value [1-24]. Value of 1 is narrow and 24 is thick.\nWidth must be checked.")
 
 # Transparency Checkbox and Numeric Entry
 transparency_var = tk.BooleanVar()
 transparency_checkbox = tk.Checkbutton(root, text="Transparency", variable=transparency_var)
 transparency_checkbox.grid(row=6, column=0, padx=10, pady=5, sticky="w")
-Tooltip(transparency_checkbox, "If checked, the width value [1-24] will be used as the OSMAnd track line width.")
+Tooltip(transparency_checkbox, "If checked, the transparency value [00-FF] will be used as the OSMAnd track line width for all processed tracks.")
 transparency_entry = tk.Entry(root)
 transparency_entry.grid(row=6, column=1, padx=10, pady=5, sticky="ew")
 transparency_entry.config(justify="left")	# Align left
-Tooltip(transparency_entry, "Transparency value to use for all tracks displayed by OSMAnd.\nSpecified as a 2 digit hex value. 00 is fully transparent and FF is opaque.\nTransparency must be checked.")
+Tooltip(transparency_entry, "Transparency value to use for all tracks processed.\nSpecified as a 2 digit hex value. 00 is fully transparent and FF is opaque.\nTransparency must be checked.")
 
 # Split Option
 split_label = tk.Label(root, text="Split:")
@@ -243,7 +253,7 @@ split_var.set("no_split")  # Default value
 split_options = ["no_split", "distance", "time"]
 split_dropdown = tk.OptionMenu(root, split_var, *split_options)
 split_dropdown.grid(row=7, column=1, padx=10, pady=5, sticky="ew")
-Tooltip(split_dropdown, "Select a split option from the pull-down")
+Tooltip(split_dropdown, "Select a split option from the pull-down.\nIf distance or time is selected OSMAnd will display distance or time splits\non the track according to the specified interval.\n\nNote: The split and interval tags appear to be ignored by OSMAnd")
 
 # Interval Entry
 interval_label = tk.Label(root, text="Interval:")
@@ -251,18 +261,18 @@ interval_label.grid(row=7, column=2, padx=10, pady=5, sticky="w")
 interval_entry = tk.Entry(root)
 interval_entry.grid(row=7, column=3, padx=10, pady=1, sticky="ew")
 interval_entry.config(justify="left")	# Align left
-Tooltip(width_entry, "Distance in miles or time in seconds to display splits on a track.\nSplit type must also be defined.")
+Tooltip(interval_entry, "Distance in miles or time in seconds to display splits on a track.\nSplit type of distance or time must be selected from the split pulldown menu.")
 
 
 # Python Execute Button
-execute_python_button = tk.Button(root, text="Convert - python", command=execute_python_program)
-execute_python_button.grid(row=8, column=0, padx=10, pady=10, sticky="ew")
-Tooltip(execute_python_button, "Execute the Python program with provided parameters")
+#execute_python_button = tk.Button(root, text="Convert - python", command=execute_python_program)
+#execute_python_button.grid(row=8, column=0, padx=10, pady=10, sticky="ew")
+#Tooltip(execute_python_button, "Execute the Python program with provided parameters")
 
 # Exe Execute Button
-execute_exe_button = tk.Button(root, text="Convert - exe", command=execute_exe_program)
-execute_exe_button.grid(row=8, column=1, padx=10, pady=10, sticky="ew")
-Tooltip(execute_exe_button, "Execute the executable program with provided parameters")
+execute_exe_button = tk.Button(root, text="Convert", command=execute_exe_program)
+execute_exe_button.grid(row=8, column=0, padx=10, pady=10, sticky="ew")
+Tooltip(execute_exe_button, "Run the conversion utility with the specified parameters")
 
 # Clear Output Button
 clear_output_button = tk.Button(root, text="Clear Output", command=clear_output)
@@ -285,12 +295,12 @@ output_scrollbar_y.grid(row=9, column=5, sticky="ns")
 output_window.config(yscrollcommand=output_scrollbar_y.set)
 
 output_scrollbar_x = tk.Scrollbar(root, command=output_window.xview, orient=tk.HORIZONTAL)
-output_scrollbar_x.grid(row=10, column=0, columnspan=3, sticky="ew")
+output_scrollbar_x.grid(row=10, column=0, columnspan=5, sticky="ew")
 output_window.config(xscrollcommand=output_scrollbar_x.set)
 
 # Exit Button
 exit_button = tk.Button(root, text="Exit", command=exit_program)
-exit_button.grid(row=11, column=0, columnspan=5, padx=10, pady=5, sticky="ew")
+exit_button.grid(row=11, column=0, padx=10, pady=5, sticky="ew")
 Tooltip(exit_button, "Exit the program")
 
 root.mainloop()
