@@ -1,7 +1,9 @@
 # GoogleMapToOSMAndGPX
 Create a folder of OSMAnd GPX files from a google my maps map (GMap)
 
-It's a python utility that works directly from a google map (using it's map ID) to export the map's KML data and directly convert it into a folder of OSMAnd style GPX files. Both tracks and waypoints and translated.   Descriptions, icon symbol, icon color, track color, track width are all translated. Each track is put in it's own GPX file and all waypoints are put in a single GPX file. 
+It's a python command line utility that works directly from a GMap (using it's map ID) to export the map's KML data and directly convert it into a folder of OSMAnd style GPX files. Both tracks and waypoints and translated.   Descriptions, icon symbol, icon color, track color, track width are all translated. Each track is put in it's own GPX file and all waypoints are put in a single GPX file. 
+
+A second program is wrapper for the command line utility. This wrapper creates a simple graphical user interface for executing the utility.  In addition to the python scripts both the command line utility and GUI wrapper are supplied as windows executable files that can be run directly, without having to install or use python
 ## Syntax
 ```
 py GoogleMapToOSMAndGPX.py <map_id> <gpx_path> <width 1-24> -t <transparency 00 to FF> -s <split type> -i <split interval miles/seconds> -a -e
@@ -87,6 +89,11 @@ Using the -l parameter the layer organization is preserved.  A subdirectory, nam
 
 ## Batch File
 There is a batch file example which allows you to create a text file containing lines of comma separated paths and map ids. These files can then be fed to the batch file and it will call this utility once for each pair/line in the file.  This is a quick way to update the GPX files from a large group of google maps without having to do them individually.
+
+## Windows Executables
+There are two .exe files provided which are windows executables.  These can be run from a command window without having to use or install python.  
+
+GoogleMapsToOSMAndGPX.exe is the command line utility itself and GoogleMapsToOSMAndGPX-gui.exe is the graphical user interface (GUI) wrapper that allows you to run the utility via a simple user inteface instead of the command line.  For this to work both files must be placed in the same directory.
 
 ## Parting words
 This is a work in progress as I learn more about OSMAnd's handling of imported GPX files. I'm not python guru so the code structure is probably not totally pythonic. There is error checking in the code, but it could probably be improved.
