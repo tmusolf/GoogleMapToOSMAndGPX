@@ -12,6 +12,8 @@
 # 5/17/2024: V1.0 Initial version
 # 5/20/2024: V1.1 Updated icon translation table 
 # 6/7/2024:  V1.2 Added -l option to write out files as layers
+# 6/16/2024: V1.2 Icon translation table change
+# 8/31/2024: V1.3 Added epolog
 #========================================================================================
 import sys
 import argparse
@@ -23,7 +25,7 @@ import os.path
 from pathlib import Path
 
 PROGRAM_NAME = Path(sys.argv[0]).stem
-PROGRAM_VERSION = "1.2"
+PROGRAM_VERSION = "1.3"
 DEFAULT_TRACK_TRANSPARENCY = "80"
 DEFAULT_WAYPOINT_DESCRIPTION = ""
 DEFAULT_TRACK_DESCRIPTION = ""
@@ -59,8 +61,8 @@ class cWaypoint:
 def setupParseCmdLine():
 	parser = argparse.ArgumentParser(
 	prog=PROGRAM_NAME,
-	description="Export the KML data for a google my maps KML and convert it to OSMAnd style GPX files, including icon conversion.")
-	# epilog="text at bottom of help")
+	description="Exports the KML data from a google my maps (GMap) and converts it to OSMAnd style GPX files, including icon conversion.",
+	epilog="Conversion Utility: " + PROGRAM_NAME + "  V" + PROGRAM_VERSION)
 	parser.add_argument("map_id",
 		help="The google map id - found between the mid= and & in the map url.  Map must have sharing enabled")
 	parser.add_argument("GPX_path",
@@ -177,7 +179,7 @@ def KMLToOSMAndIcon(KMLIconID):
 		"1498":["product_brick",						KMLCOLOR,"circle"],			# gmap:shape_default	little square	OSMAnd Alts: military,natural_peak, product_brick
 		"1499":["skimap_white_black_round_shield",		KMLCOLOR,"circle"],			# gmap:shape_circle
 		"1500":["glaziery",								KMLCOLOR,"circle"],			# gmap:shape_square						OSMAnd Alts: chess, glaziery
-		"1501":["natural_peak",							KMLCOLOR,"circle"],			# gmap:shape_diamond					OSMAnd Alts: building_type_pyramid, flooring, natural_peak
+		"1501":["flooring",								KMLCOLOR,"circle"],			# gmap:shape_diamond					OSMAnd Alts: building_type_pyramid, flooring, natural_peak
 		"1502":["special_star",							KMLCOLOR,"circle"],			# gmap:shape_star						OSMAnd Alts:  shape_star, special_star, special_star_stroked (hollow), tourism_attraction,tourism_yes
 		"1503":["erotic",								KMLCOLOR,"circle"],			# gmap:adult-xxx
 		"1504":["air_transport",						KMLCOLOR,"circle"],			# gmap:airport-plane
