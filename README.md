@@ -88,7 +88,7 @@ A google map can have layers as a way to organize the waypoints and tracks.  By 
 Using the -l parameter the layer organization is preserved.  A subdirectory, named after the layer, is created under <gpx_path>for each layer.  Each of these subdirectories will contain a GPX file for each track in the layer and one GPX file containing all of the waypoints in the layer.
 
 ## Batch File
-There is a batch file example which allows you to create a text file containing lines of comma separated paths and map ids. These files can then be fed to the batch file and it will call this utility once for each pair/line in the file.  This is a quick way to update the GPX files from a large group of google maps without having to do them individually.
+There is a batch file example which takes a user created text file containing lines of comma separated paths and GMap ids. This file can then be fed to the batch file and it will call the conversion utility once for each GMap line pair in the file.  This is a quick way to update the GPX files from a large group of google maps without having to do them individually.
 
 ## Windows Executables
 There are two .exe files provided which are windows executables.  These can be run from a command window without having to use or install python.  
