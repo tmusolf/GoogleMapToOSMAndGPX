@@ -1,6 +1,15 @@
 #!/usr/bin/python
+#============================================================================================================
+# GoogleMapToOSMAndGPX-gui.py
+#
+# V1.1  8/31/2024
+#	Added icons, version number and some comments
+#	When building with PyInstaller, make sure to include all icon sizes:
+#		pyinstaller --add-data "icon16x16.png:." --add-data "icon32x32.png:." --add-data "icon48x48.png:." your_script.py
+# V1.0 Original
+#============================================================================================================
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import filedialog, messagebox, PhotoImage
 import subprocess
 import os
 import sys
@@ -9,7 +18,7 @@ import string
 
 EXE_PROGRAM = "GoogleMapToOSMAndGPX.exe"
 PYTHON_PROGRAM = "GoogleMapToOSMAndGPX.py"
-
+VERSION ="V1.1"
 
 class Tooltip:
 	def __init__(self, widget, text):
@@ -64,7 +73,7 @@ def is_valid_hex(hex_str):
 	return False
 
 def show_help():
-    execute_program(EXE_PROGRAM, '--help')
+	execute_program(EXE_PROGRAM, '--help')
 
 def execute_python_program():
 	execute_program('py',PYTHON_PROGRAM)
@@ -167,13 +176,39 @@ def browse_directory():
 def exit_program():
 	root.destroy()
 
+def resource_path(relative_path):
+	""" Get absolute path to resource, works for dev and for PyInstaller """
+	try:
+		# PyInstaller creates a temp folder and stores path in _MEIPASS
+		base_path = sys._MEIPASS
+	except Exception:
+		base_path = os.path.abspath(".")
+	return os.path.join(base_path, relative_path)
+#=====================================================================================
 root = tk.Tk()
-root.title("Google Map to OSMAnd style GPX file converter V1.1")
+root.title("Google Map to OSMAnd style GPX file converter " + VERSION)
 root.geometry("800x660")
+# Load icons
+try:
+	icon16 = tk.PhotoImage(file=resource_path("icons/icon16x16.png"))
+	icon32 = tk.PhotoImage(file=resource_path("icons/icon32x32.png"))
+	icon48 = tk.PhotoImage(file=resource_path("icons/icon48x48.png"))  # Add a larger icon for better visibility in taskbar
+	root.iconphoto(True,icon48,icon32,icon16)
+	# For Windows, set the taskbar icon explicitly
+	# Windows-specific code to set the taskbar icon explicitly. This uses the Windows API through ctypes to set an "AppUserModelID", 
+	# which helps Windows properly associate the icon with your application in the taskbar.
+	if os.name == 'nt':  # 'nt' is the os name for Windows
+		import ctypes
+		myappid = 'mycompany.myproduct.subproduct.version'  # arbitrary string
+		ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+except tk.TclError as e:
+	print(f"Error loading icons: {e}")
+
+
 # https://icoconvert.com/ to create icon file in multiple sizes from png file
 # If "compiling" into a windows exe using pyinstaller/auto-py-to-exe using the --icon option to load icon.ico into the file
 # specifying sys.executable will then pull the icon out of the executable without having to carry a separate icon file around.
-root.iconbitmap(sys.executable) 
+#root.iconbitmap(sys.executable) 
 
 
 # Instruction text
