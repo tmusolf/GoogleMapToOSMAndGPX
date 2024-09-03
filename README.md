@@ -38,13 +38,13 @@ A google map can have layers as a way to organize the waypoints and tracks.  By 
 Using the -l parameter the layer organization is preserved.  A subdirectory, named after the layer, is created under <gpx_path>for each layer.  Each of these subdirectories will contain a GPX file for each track in the layer and one GPX file containing all of the waypoints in the layer.
 
 ## Using the GPX files with OSMAnd
-To use these converted GPX files in OSMAnd they need to be placed in the appropriate OSMAnd tracks folder on your phone. Transfer the folder and it's GPX files to your phone and then use a file manager to copy the entire folder to the Android/media/net.osmand.plus/files/tracks directory.  You can also create folders under the tracks directory to contain these folders. For example, ...tracks\Germany & ...tracks\Sweden.  This type of organization can make it easier to find and manage these tracks.
+To use these converted GPX files in OSMAnd they need to be placed in the appropriate OSMAnd tracks folder on your phone. Transfer the folder and it's GPX files to your phone and then use a file manager app to copy the entire folder to the **Android/media/net.osmand.plus/files/tracks** directory.  You can also create folders under the tracks directory to contain these folders. For example, ...tracks\Germany & ...tracks\Sweden.  This type of organization can make it easier to find and manage these tracks.
 
-To remove the GPX files from OSMAnd you can use a file manager or OSMAnd My Places to delete individual GPX files or the entire folder.
+To remove the GPX files from OSMAnd you can use a file manager app or OSMAnd My Places to delete individual GPX files or the entire folder.
 
 NOTE: As of V4.8.6 the OSMAnd import feature only allows you to import a single GPX file at a time, not a folder of GPX files.  In addition, if you use the OSMAnd import feature you will lose a track's color and line width and they will be imported with OSMAnd default values.
 
-NOTE: Starting with Android 11 there are enhanced file protection protocals put in place that prevent you from accessing the files in the Android/obb/net.osmand.plus folders. You can change this location to that is accessible by other Android applications by going to settings/OSMAnd settings/Data storage folder and selecting manually specified /storage/emulated/0/Android/media/net.osmand.plus/files.
+NOTE: Starting with Android 11 there are enhanced file protection protocals put in place that prevent you from accessing the files in the Android/obb/net.osmand.plus folders. You can change this location to one that is accessible by other Android applications by going to **settings/OSMAnd settings/Data storage folder** and selecting **manually specified /storage/emulated/0/Android/media/net.osmand.plus/files**.
 
 ## Making a GPX file visible
 
