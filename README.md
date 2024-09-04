@@ -9,7 +9,7 @@ There is a command line utility and a GUI wrapper that provides a simple graphic
 
 Both the utility and wrapper can be run as python utilities or you can use the provided Windows executable (exe) files, so python is not required.
 
-The utility uses the GMap MapID to directly export the map's data in KML format and then it converts it to OSMAnd style GPX files. Both tracks and waypoints and translated. Descriptions, icon symbol, icon color, track color, track width are all translated. For a given map each track is put in its own GPX file and all waypoints are put in a single GPX file. Optionally, the GMap layers will be preserved, creating a separate subdirectory for each GMap layer.
+The utility uses the GMap MapID to directly export the map's data in KML format and then it converts it to OSMAnd style GPX files. Both tracks and waypoints are converted along with the appropriate description, icon symbol, icon color, track color and track width. For a given map each track is put in its own GPX file and all waypoints are put in a single GPX file. Optionally, the GMap layers will be preserved, creating a separate subdirectory of GPX files for each GMap layer.
 ## Example of a GMap and OSMAnd equivalent
 Here is a small section of a GMap and the corresponding GPX data created by this utility displayed in OSMAnd
 
@@ -40,7 +40,7 @@ Using the -l parameter the layer organization is preserved.  A subdirectory, nam
 ## Using the GPX files with OSMAnd
 To use these converted GPX files in OSMAnd they need to be placed in the appropriate OSMAnd tracks folder on your phone. Transfer the folder and it's GPX files to your phone and then use a file manager app to copy the entire folder to the **Android/media/net.osmand.plus/files/tracks** directory.  You can also create folders under the tracks directory to contain these folders. For example, ...tracks\Germany & ...tracks\Sweden.  This type of organization can make it easier to find and manage these tracks.
 
-To remove the GPX files from OSMAnd you can use a file manager app or OSMAnd My Places to delete individual GPX files or the entire folder.
+To remove the GPX files from OSMAnd you can use a file manager app or OSMAnd **My Places** to delete individual GPX files or the entire folder.
 
 NOTE: As of V4.8.6 the OSMAnd import feature only allows you to import a single GPX file at a time, not a folder of GPX files.  In addition, if you use the OSMAnd import feature you will lose a track's color and line width and they will be imported with OSMAnd default values.
 
@@ -75,17 +75,26 @@ Once the folder is transfered into OSMAnd you can make all the GPX files in the 
 
 ## Making a GPX file not visible
 
-<br>To make a folder of GPX files not visible nagivate to the appropriate folder, as shown above, select **Show all tracks on the map** then uncheck or deselect the files you want turn off and finally select **apply**.<br>
+<br>To make a folder of GPX files not visible nagivate to the appropriate folder, as shown above, select **Show all tracks on the map** then uncheck or deselect the files you want to make **not** visible and finally select **apply**.<br>
 <img src="https://github.com/user-attachments/assets/b5f04330-cbbc-4c9f-b134-fa6b4c3851c9" alt="Options" width="200">
 
 
 ## Windows Executables
-There are two .exe files provided which are windows executables.  They are standalone files and do not need to be installed, they can be run directly.  You do not need to use or install python to run these exe files.  
+There are two .exe files provided which are windows 64 bit executables.  They are standalone files and do not need to be installed, they can be run directly.  You do not need to use or install python to run these exe files.  
 
-GoogleMapsToOSMAndGPX.exe is the command line utility itself and GoogleMapsToOSMAndGPX-gui.exe is the graphical user interface (GUI) wrapper that allows you to run the utility via a simple user inteface instead of the command line.  For this to work both files must be placed in the same directory.
+GoogleMapToOSMAndGPX.exe is the command line utility itself and GoogleMapToOSMAndGPX-gui.exe is the graphical user interface (GUI) wrapper that allows you to run the utility via a simple user inteface instead of the command line.  For this to work both files must be placed in the same directory.
+
+The first time you run GoogleMapToOSMAndGPX-gui.exe you may receive a windows warning about these files because they don't have an official security certificate.  I'm not a professional developer so I don't have one of those.  You'll need to select **run anyway** to get it to execute.
+
+These have been tested on several Windows 10 machines and they run fine, but that's far from an exhaustive test protocol. Your milage may vary.
+
+## Python Source Code
+I'm not going to go into how to install python and run these utilities.  If you're familar with Python on your platform of choice, it shouldn't be difficult.
+
+I used pyinstaller to "compile" the python source code into the Windows executable files.  You can use the spec files in Github to drive pyinstaller.
 
 ## Batch File
-There is a batch file example which takes a user created text file containing lines of comma separated paths and GMap ids with optional parameter overides. This file can then be fed to the batch file and it will call the conversion utility once for each GMap line in the file.  This is a quick way to update the GPX files from a large group of google maps without having to do them individually.
+There is a batch file example which takes a user created text file containing lines of comma separated paths and GMap ids with optional parameter overides. This file can then be fed to the batch file and it will call the conversion utility once for each line in the file.  This is a quick way to update the GPX files from a large group of GMaps without having to do them individually.
 
 ## GPX Track file example
 Here is an example of the GPX XML code created by this utility for a track
@@ -136,7 +145,9 @@ Here is an example of the GPX XML code created by this utility for waypoints.
 ```
 
 ## Parting words
-This is a work in progress as I learn more about OSMAnd's handling of GPX files and its GPX extensions. 
+I use this utility on a regular basis and it's made importing my custom GMaps so much easier.  This is a work in progress as I learn more about OSMAnd's handling of GPX files and its GPX extensions. Feedback and comments welcome.
 
 I'm not python guru so the code structure is probably not totally pythonic.
+
+I'm sharing this in the hope that they are of use to the broader OSMAnd community.  
 
